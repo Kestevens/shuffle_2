@@ -6,9 +6,9 @@ from googleapiclient.http import MediaIoBaseDownload
 
 # Configuratie
 SERVICE_ACCOUNT_FILE = "/root/.config/service_account.json"
-INPUT_FOLDER_ID = "1_vr56jMd4aQaahI_bUvSRYcdxyGHY8zG"  # map met reduced_votes.json
-FILE_NAME = "reduced_votes.json"
-LOCAL_FILE = "/app/reduced_votes.json"
+INPUT_FOLDER_ID = "1EYf9den2D8IVAGvVDrH1ACp6C89z7p1f"
+FILE_NAME = "generated_votes.txt"
+LOCAL_FILE = "/app/generated_votes.txt"
 
 # Authenticate
 creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
