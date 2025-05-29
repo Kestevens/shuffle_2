@@ -4,10 +4,10 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 
 SERVICE_ACCOUNT_FILE = "/root/.config/service_account.json"
-INPUT_FOLDER_ID = "1_vr56jMd4aQaahI_bUvSRYcdxyGHY8zG"     # reduced_votes
+INPUT_FOLDER_ID = "1EYf9den2D8IVAGvVDrH1ACp6C89z7p1f"     # generated_votes.txt
 OUTPUT_FOLDER_ID = "16AdOIvSlwUHAcVqIiulWovp1WaeUHiuJ"    # display_votes
-FILE_NAME = "reduced_votes.json"
-LOCAL_FILE = "/app/reduced_votes.json"
+FILE_NAME = "generated_votes.txt"
+LOCAL_FILE = "/app/generated_votes.txt"
 OUTPUT_FILE = "display_votes.json"
 
 # Authenticate
@@ -24,7 +24,7 @@ response = service.files().list(
 
 files = response.get("files", [])
 if not files:
-    raise Exception("❌ reduced_votes.json niet gevonden op Drive.")
+    raise Exception("❌ generated_votes.txt niet gevonden op Drive.")
 
 file_id = files[0]["id"]
 print(f"📥 Gekozen bestand ID: {file_id}, laatst gewijzigd: {files[0]['modifiedTime']}")
