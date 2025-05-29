@@ -15,25 +15,23 @@ OUTPUT_FILE = "display_votes.json"
 creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
 service = build("drive", "v3", credentials=creds)
 
-# === Download bestand van Google Drive ===
+# Zoek alle bestanden met de juiste naam en folder
 response = service.files().list(
     q=f"name='{FILE_NAME}' and '{INPUT_FOLDER_ID}' in parents",
     spaces="drive",
-    fields="files(id, name)"
+    fields="files(id, name, modifiedTime)",
+    orderBy="modifiedTime desc"
 ).execute()
 
 files = response.get("files", [])
 if not files:
-    raise Exception("❌ Bestand niet gevonden in reduced_votes-map.")
+    raise Exception("❌ Geen bestand gevonden met de naam reduced_votes.json in de map.")
+
+# Neem het meest recente bestand
 file_id = files[0]["id"]
 
-request = service.files().get_media(fileId=file_id)
-fh = open(LOCAL_FILE, "wb")
-downloader = MediaIoBaseDownload(fh, request)
-done = False
-while not done:
-    status, done = downloader.next_chunk()
-print("📥 Bestand gedownload uit reduced_votes.")
+print(f"📄 Gekozen bestand: {files[0]['name']} (laatst gewijzigd: {files[0]['modifiedTime']})")
+
 
 # === Verwerk JSON-bestand ===
 try:
