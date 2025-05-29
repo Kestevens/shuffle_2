@@ -1,20 +1,22 @@
 import os, io, json
+import pandas as pd
+from collections import defaultdict
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 
 SERVICE_ACCOUNT_FILE = "/root/.config/service_account.json"
-INPUT_FOLDER_ID = "1EYf9den2D8IVAGvVDrH1ACp6C89z7p1f"     # generated_votes.txt
-OUTPUT_FOLDER_ID = "16AdOIvSlwUHAcVqIiulWovp1WaeUHiuJ"    # display_votes
+INPUT_FOLDER_ID = "1EYf9den2D8IVAGvVDrH1ACp6C89z7p1f"
+OUTPUT_FOLDER_ID = "16AdOIvSlwUHAcVqIiulWovp1WaeUHiuJ"
 FILE_NAME = "generated_votes.txt"
 LOCAL_FILE = "/app/generated_votes.txt"
 OUTPUT_FILE = "display_votes.json"
 
-# Authenticate
+# === Google Drive authenticatie ===
 creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
 service = build("drive", "v3", credentials=creds)
 
-# Zoek meest recente bestand in map
+# === Meest recente bestand ophalen ===
 response = service.files().list(
     q=f"name='{FILE_NAME}' and '{INPUT_FOLDER_ID}' in parents",
     spaces="drive",
@@ -29,7 +31,7 @@ if not files:
 file_id = files[0]["id"]
 print(f"📥 Gekozen bestand ID: {file_id}, laatst gewijzigd: {files[0]['modifiedTime']}")
 
-# Download bestand
+# === Download bestand ===
 request = service.files().get_media(fileId=file_id)
 with open(LOCAL_FILE, "wb") as f:
     downloader = MediaIoBaseDownload(f, request)
@@ -37,24 +39,34 @@ with open(LOCAL_FILE, "wb") as f:
     while not done:
         status, done = downloader.next_chunk()
 
-# ✅ Lees en verwerk de stemdata
+# === Verwerk stemdata ===
 try:
-    with open(LOCAL_FILE, "r", encoding="utf-8") as f:
-        vote_data = json.load(f)
+    df = pd.read_csv(LOCAL_FILE, sep="\t")
 
-    if not isinstance(vote_data, dict):
-        raise Exception("❌ Verwacht dictionary met song_number -> aantal stemmen.")
+    if "COUNTRY CODE" not in df.columns or "SONG NUMBER" not in df.columns:
+        raise Exception("❌ Kolommen 'COUNTRY CODE' of 'SONG NUMBER' ontbreken.")
 
-    # Sorteer op aantal stemmen (aflopend)
-    sorted_votes = sorted(vote_data.items(), key=lambda x: x[1], reverse=True)
+    # Stemmen tellen per land en per song
+    result = defaultdict(dict)
 
-    print("\n🎵 Final Song Ranking (by total votes):\n")
-    for i, (song, count) in enumerate(sorted_votes, 1):
-        print(f"{i}. Song {song}: {count} votes")
+    grouped = df.groupby(["COUNTRY CODE", "SONG NUMBER"]).size().reset_index(name="votes")
+    for _, row in grouped.iterrows():
+        country = row["COUNTRY CODE"]
+        song = str(row["SONG NUMBER"])
+        votes = int(row["votes"])
+        result[country][song] = votes
 
-    # Optional: opslaan en uploaden
+    # Print op het scherm
+    print("\n🎵 Vote Summary per Country:\n")
+    for country, votes in result.items():
+        print(f"Country: {country}")
+        for song, count in sorted(votes.items(), key=lambda x: x[1], reverse=True):
+            print(f"  Song {song}: {count} votes")
+        print()
+
+    # === Upload JSON-output naar Drive ===
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(vote_data, f, indent=2)
+        json.dump(result, f, indent=2)
 
     metadata = {
         "name": OUTPUT_FILE,
@@ -63,9 +75,7 @@ try:
     media = MediaFileUpload(OUTPUT_FILE, mimetype="application/json")
     uploaded = service.files().create(body=metadata, media_body=media, fields="id").execute()
 
-    print(f"\n✅ Bestand geüpload naar display_votes: {uploaded['id']}")
+    print(f"✅ Bestand geüpload naar display_votes map. Bestand-ID: {uploaded['id']}")
 
-except json.JSONDecodeError:
-    print("❌ Kon JSON niet inlezen.")
 except Exception as e:
-    print(f"🚫 Fout: {e}")
+    print(f"🚫 Fout bij verwerking: {e}")
