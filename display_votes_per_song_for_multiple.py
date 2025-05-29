@@ -7,7 +7,7 @@ from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 SERVICE_ACCOUNT_FILE = "/root/.config/service_account.json"
 INPUT_FOLDER_ID = "1_vr56jMd4aQaahI_bUvSRYcdxyGHY8zG"     # map met reduced_votes_se.txt
 OUTPUT_FOLDER_ID = "16AdOIvSlwUHAcVqIiulWovp1WaeUHiuJ"    # map waar display_votes.json naartoe gaat
-FILE_NAME = "reduced_votes_se.txt"
+FILE_NAME = "reduced_votes.json"
 LOCAL_FILE = "/app/reduced_votes_se.txt"
 OUTPUT_FILE = "display_votes.json"
 
