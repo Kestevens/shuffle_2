@@ -56,7 +56,7 @@ try:
 except FileNotFoundError:
     print(f"File '{input_file}' not found.")
 except json.JSONDecodeError:
-    print(f"Error decoding JSON from '{input_file}'.")
+    print(f"Error decoding JSON from '{LOCAL_FILE}'.")
 
 # Upload naar Drive
 file_metadata = {
